@@ -63,6 +63,13 @@ def humanize_resp(resp):
         for row in resp[set]:
             print(row)
 
+def unbuffered_file_dump(file):
+    unbuffered = os.fdopen(sys.stdout.fileno(), 'wb', 0)
+    data = file.read(10000)
+    while data:
+        unbuffered.write(data)
+        data = file.read(10000)
+
 class Musicd:
     '''A class for interfacing with the Musicd http-interface.'''
     def __init__(self, session = None):
@@ -112,19 +119,27 @@ class Musicd:
         return request
     
     def albums(self, **kwargs):
+        '''Return the query response in python dict.'''
         VALID_ARGS = ['albumid', 'search', 'sort', 'total', 'offset', 'limit']
         request = self.__generic_request('/albums?', VALID_ARGS, kwargs)
         return self.__method_request(request)
   
     def artists(self, **kwargs):
+        '''Return the query response in python dict.'''
         VALID_ARGS = ['artistid', 'search', 'sort', 'total', 'offset', 'limit']
         request = self.__generic_request('/artists?', VALID_ARGS, kwargs)
         return self.__method_request(request)
+    
+    def open(self, id):
+        '''Return a file object of the mp3 stream.'''
+        return self.__request_server(self.__session, '/open?id=%u' % id)
 
 opts = cmdline_parse()
 musicd = Musicd()
 musicd.auth(opts.host, opts.port, opts.user, opts.password)
 #print (musicd.artists(artistid = 372))
-print(musicd.albums(search = "machine"))
-
-
+#print(musicd.albums(search = "machine"))
+#unbuffered = os.fdopen(sys.stdout.fileno(), 'wb', 0)
+#sys.stdout = unbuffered
+#sys.stdout.write(musicd.open(200).read(10000))
+unbuffered_file_dump(musicd.open(200))

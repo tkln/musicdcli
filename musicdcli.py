@@ -23,15 +23,24 @@ def cmdline_parse():
                       help = "server host", metavar = "HOST")
     parser.add_option("-P", "--port", dest = "port", type = "int",
                       help = "the port to connect to", metavar = "PORT")
-    '''parser.add_option("-c", "--cookiefile", dest="cookiefile",
-                      help = "the file to store session cookie in",
-                      metavar = "FILE")'''
-    parser.add_option("--request-type", dest = "request_type", metavar = "TYPE",
-                      help = "the type of the request. valid values are: album \
-and artist")
+    parser.add_option("-r", "--request", dest = "request_type", 
+                      metavar = "TYPE", help = "the type of the request. valid \values are: albums, artists and tracks")
     parser.add_option("--name", dest = "name", help = "string to search with")
     parser.add_option("--id", dest = "id", type = "int", 
                       help = "the id of the object to be requested")
+    parser.add_option("--trackid", dest = "trackid", type = "int", 
+                      help = "the id of the track to be requested", 
+                      metavar = "TRACKID")
+    parser.add_option("--artistid", dest = "artistid", type = "int", 
+                      help = "the id of the artist to be requested",
+                      metavar = "ARTISTID")
+    parser.add_option("--albumid", dest = "albumid", type = "int", 
+                      help = "the id of the album to be requested", 
+                      metavar = "ALBUMID")
+    parser.add_option("--artist", dest = "artist", help = "name of the artist",
+                      metavar = "ARTIST")
+    parser.add_option("--album", dest = "album", help = "name of the album",
+                      metavar = "ALBUM")
     parser.add_option("--sort", dest = "sort", help = "sorting string",
                       metavar = "SORT")
     parser.add_option("--offset", dest = "offset", 
@@ -144,21 +153,21 @@ opts = cmdline_parse()
 musicd = Musicd()
 musicd.auth(opts.host, opts.port, opts.user, opts.password)
 
-resp_methods = {
-    'album' : lambda : musicd.albums(albumid=opts.id, search=opts.name, 
-                                     sort=opts.sort, offset=opts.offset, 
-                                     limit=opts.limit),
-    'artist' : lambda : musicd.artists(artistid=opts.id, search=opts.name, 
-                                       sort=opts.sort, offset=opts.offset, 
-                                       limit=opts.limit),
-    'track' : lambda : musicd.tracks(trackid=opts.id, search=opts.name, 
-                                     sort=opts.sort, offset=opts.offset, 
-                                     limit=opts.limit)
-    }
+if opts.request_type == 'albums': 
+    humanize_resp(musicd.albums(albumid=opts.id, search=opts.name, 
+                                sort=opts.sort, offset=opts.offset, 
+                                limit=opts.limit))
+elif opts.request_type == 'artists':
+    humanize_resp = (musicd.artists(artistid=opts.id, search=opts.name,
+                                    sort=opts.sort, offset=opts.offset, 
+                                    limit=opts.limit))
+elif opts.request_type == 'tracks': 
+    humanize_resp(musicd.tracks(trackid=opts.id, artistid=opts.artistid,
+                  albumid=opts.albumid, search=opts.name, artist=opts.artist, 
+                  album=opts.album, sort=opts.sort, offset=opts.offset, 
+                  limit=opts.limit))
+elif opts.request_type == 'open':
+   unbuffered_file_dump(musicd.open(opts.id)) 
 
-try:
-    resp = resp_methods[opts.request_type]()
-    humanize_resp(resp)
-except KeyError:
-    print("invalid commanline arg")
-    sys.exit(2)
+
+

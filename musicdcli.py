@@ -69,7 +69,9 @@ def humanize_resp(resp):
     '''Print dict in somewhat more sensible fashion.'''
     for set in resp:
         for row in resp[set]:
-            print(row)
+            for property in row:
+                sys.stdout.write("%s: %s, " % (property, str(row[property])))
+            sys.stdout.write('\n')
 
 def unbuffered_file_dump(file):
     unbuffered = os.fdopen(sys.stdout.fileno(), 'wb', 0)

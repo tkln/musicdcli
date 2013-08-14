@@ -128,9 +128,14 @@ class Musicd:
         '''Return the query response in python dict.'''
         VALID_ARGS = ['artistid', 'search', 'sort', 'total', 'offset', 'limit']
         request = self.__generic_request('/artists?', VALID_ARGS, kwargs)
-        print(request)
         return self.__method_request(request)
-    
+
+    def tracks(self, **kwargs):
+        VALID_ARGS = ['trackid', 'artistid', 'albumid', 'search', 'artist', 
+                      'album', 'sort', 'total', 'offset', 'limit']
+        request = self.__generic_request('/tracks?', VALID_ARGS, kwargs)
+        return self.__method_request(request)
+
     def open(self, id):
         '''Return a file object of the mp3 stream.'''
         return self.__request_server(self.__session, '/open?id=%u' % id)
@@ -145,7 +150,10 @@ resp_methods = {
                                      limit=opts.limit),
     'artist' : lambda : musicd.artists(artistid=opts.id, search=opts.name, 
                                        sort=opts.sort, offset=opts.offset, 
-                                       limit=opts.limit)
+                                       limit=opts.limit),
+    'track' : lambda : musicd.tracks(trackid=opts.id, search=opts.name, 
+                                     sort=opts.sort, offset=opts.offset, 
+                                     limit=opts.limit)
     }
 
 try:

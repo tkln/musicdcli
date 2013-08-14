@@ -29,8 +29,7 @@ def cmdline_parse():
     parser.add_option("--request-type", dest = "request_type", metavar = "TYPE",
                       help = "the type of the request. valid values are: album \
 and artist")
-    parser.add_option("--album", dest = "album", help = "album request")
-    parser.add_option("--artist", dest = "artist", help = "artist request")
+    parser.add_option("--name", dest = "name", help = "string to search with")
     parser.add_option("--id", dest = "id", type = "int", 
                       help = "the id of the object to be requested")
     parser.add_option("--sort", dest = "sort", help = "sorting string",
@@ -112,7 +111,8 @@ class Musicd:
     def __generic_request(self, request, valid_args, args):
         for arg in args:
             if arg in valid_args:
-                request += "%s=%s" % (arg, str(args[arg]))
+                if args[arg] is not None:
+                    request += "%s=%s&" % (arg, str(args[arg]))
             else:
                 print("invalid request parameter")
                 exit(2)
@@ -128,6 +128,7 @@ class Musicd:
         '''Return the query response in python dict.'''
         VALID_ARGS = ['artistid', 'search', 'sort', 'total', 'offset', 'limit']
         request = self.__generic_request('/artists?', VALID_ARGS, kwargs)
+        print(request)
         return self.__method_request(request)
     
     def open(self, id):
@@ -137,9 +138,14 @@ class Musicd:
 opts = cmdline_parse()
 musicd = Musicd()
 musicd.auth(opts.host, opts.port, opts.user, opts.password)
-#print (musicd.artists(artistid = 372))
-#print(musicd.albums(search = "machine"))
-#unbuffered = os.fdopen(sys.stdout.fileno(), 'wb', 0)
-#sys.stdout = unbuffered
-#sys.stdout.write(musicd.open(200).read(10000))
-unbuffered_file_dump(musicd.open(200))
+
+if opts.request_type == "album":
+    humanize_resp(musicd.albums(albumid=opts.id, search=opts.name, 
+                                sort=opts.sort, offset=opts.offset, 
+                                limit=opts.limit))
+elif opts.request_type == "artist":
+    resp = musicd.artists(artistid=opts.id, search=opts.name, 
+                                 sort=opts.sort, offset=opts.offset, 
+                                 limit=opts.limit)
+if resp:
+    humanize_resp(resp)

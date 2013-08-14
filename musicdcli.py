@@ -23,10 +23,22 @@ def cmdline_parse():
                       help = "server host", metavar = "HOST")
     parser.add_option("-P", "--port", dest = "port", type = "int",
                       help = "the port to connect to", metavar = "PORT")
-    parser.add_option("-c", "--cookiefile", dest="cookiefile",
+    '''parser.add_option("-c", "--cookiefile", dest="cookiefile",
                       help = "the file to store session cookie in",
-                      metavar = "FILE")
-
+                      metavar = "FILE")'''
+    parser.add_option("--request-type", dest = "request_type", metavar = "TYPE",
+                      help = "the type of the request. valid values are: album \
+and artist")
+    parser.add_option("--album", dest = "album", help = "album request")
+    parser.add_option("--artist", dest = "artist", help = "artist request")
+    parser.add_option("--id", dest = "id", type = "int", 
+                      help = "the id of the object to be requested")
+    parser.add_option("--sort", dest = "sort", help = "sorting string",
+                      metavar = "SORT")
+    parser.add_option("--offset", dest = "offset", 
+                      help = "amount of omitted results", metavar="OFFSET")
+    parser.add_option("--limit", dest = "limit", 
+                      help = "amount of results shown", metavar = "LIMIT")
     (options, args) = parser.parse_args()
     try:
         if options.host == None:
@@ -84,49 +96,35 @@ class Musicd:
     def auth(self, host, port, user, password):
         '''Authenticate to the server. Set the internal session cookie.'''
         resp = self.__request_server({'host' : host, 'port' : port}, 
-                              "/auth?user=%s&password=%s" % 
-                              (user, password))
+                                     "/auth?user=%s&password=%s" % 
+                                     (user, password))
         self.__session = {'host' : host, 
                         'port' : port, 
                         'cookie' : self.__get_cookie(resp)}
 
-    def albums(self, albumid = None, search = None, sort = None, 
-               total = None, offset = None, limit = None):
-        request = "/albums?"
-        if albumid:
-            request += "albumid=%i&" % albumid
-        if search:
-            request += "search=%s&" % search
-        if sort:
-            request += "sort=%s&" % sort
-        if total:
-            request += "total=%s&" % total
-        if offset:
-            request += "offset=%i" % offset
-        if limit:
-            request += "limit=%i" % limit
+    def __generic_request(self, request, valid_args, args):
+        for arg in args:
+            if arg in valid_args:
+                request += "%s=%s" % (arg, str(args[arg]))
+            else:
+                print("invalid request parameter")
+                exit(2)
+        return request
+    
+    def albums(self, **kwargs):
+        VALID_ARGS = ['albumid', 'search', 'sort', 'total', 'offset', 'limit']
+        request = self.__generic_request('/albums?', VALID_ARGS, kwargs)
         return self.__method_request(request)
-
-    def artists(self, artistid = None, search = None, sort = None, 
-                total = None, offset = None, limit = None):
-        request = "/artists?"
-        if artistid:
-            request += "artistid=%i&" % artistid
-        if search:
-            request += "search=%s&" % search
-        if sort:
-            request += "sort=%s&" % sort
-        if total:
-            request += "total=%s&" % total
-        if offset:
-            request += "offset=%i" % offset
-        if limit:
-            request += "limit=%i" % limit
+  
+    def artists(self, **kwargs):
+        VALID_ARGS = ['artistid', 'search', 'sort', 'total', 'offset', 'limit']
+        request = self.__generic_request('/artists?', VALID_ARGS, kwargs)
         return self.__method_request(request)
 
 opts = cmdline_parse()
 musicd = Musicd()
 musicd.auth(opts.host, opts.port, opts.user, opts.password)
-print (musicd.artists(search = "kraft"))
+#print (musicd.artists(artistid = 372))
+print(musicd.albums(search = "machine"))
 
 

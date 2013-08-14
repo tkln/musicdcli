@@ -73,12 +73,12 @@ def humanize_resp(resp):
                 sys.stdout.write("%s: %s, " % (property, str(row[property])))
             sys.stdout.write('\n')
 
-def unbuffered_file_dump(file):
+def file_dump(file, bufsize):
     unbuffered = os.fdopen(sys.stdout.fileno(), 'wb', 0)
-    data = file.read(10000)
+    data = file.read(bufsize)
     while data:
         unbuffered.write(data)
-        data = file.read(10000)
+        data = file.read(bufsize)
 
 class Musicd:
     '''A class for interfacing with the Musicd http-interface.'''
@@ -169,7 +169,7 @@ elif opts.request_type == 'tracks':
                   album=opts.album, sort=opts.sort, offset=opts.offset, 
                   limit=opts.limit))
 elif opts.request_type == 'open':
-   unbuffered_file_dump(musicd.open(opts.id)) 
+   file_dump(musicd.open(opts.id), 1000) 
 
 
 

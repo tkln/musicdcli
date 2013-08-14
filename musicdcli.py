@@ -139,13 +139,18 @@ opts = cmdline_parse()
 musicd = Musicd()
 musicd.auth(opts.host, opts.port, opts.user, opts.password)
 
-if opts.request_type == "album":
-    humanize_resp(musicd.albums(albumid=opts.id, search=opts.name, 
-                                sort=opts.sort, offset=opts.offset, 
-                                limit=opts.limit))
-elif opts.request_type == "artist":
-    resp = musicd.artists(artistid=opts.id, search=opts.name, 
-                                 sort=opts.sort, offset=opts.offset, 
-                                 limit=opts.limit)
-if resp:
+resp_methods = {
+    'album' : lambda : musicd.albums(albumid=opts.id, search=opts.name, 
+                                     sort=opts.sort, offset=opts.offset, 
+                                     limit=opts.limit),
+    'artist' : lambda : musicd.artists(artistid=opts.id, search=opts.name, 
+                                       sort=opts.sort, offset=opts.offset, 
+                                       limit=opts.limit)
+    }
+
+try:
+    resp = resp_methods[opts.request_type]()
     humanize_resp(resp)
+except KeyError:
+    print("invalid commanline arg")
+    sys.exit(2)

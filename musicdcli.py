@@ -72,6 +72,11 @@ def auth(host, port, user, password):
                           "/auth?user=%s&password=%s" % (user, password))
     return {'host' : host, 'port' : port, 'cookie' : get_cookie(resp)}
 
+def humanize_resp(resp):
+    for set in resp:
+        for row in resp[set]:
+            print(row)
+
 def albums(session, albumid = None, search = None, sort = None, total = None, 
            offset = None, limit = None):
     request = "/albums?"
@@ -89,13 +94,26 @@ def albums(session, albumid = None, search = None, sort = None, total = None,
         request += "limit=%i" % limit
     return read_json(request_server(session, request))
 
-def humanize_resp(resp):
-    for set in resp:
-        for row in resp[set]:
-            print(row)
+def artists(session, artistid = None, search = None, sort = None, total = None,
+            offset = None, limit = None):
+    request = "/artists?"
+    if artistid:
+        request += "artistid=%i&" % artistid
+    if search:
+        request += "search=%s&" % search
+    if sort:
+        request += "sort=%s&" % sort
+    if total:
+        request += "total=%s&" % total
+    if offset:
+        request += "offset=%i" % offset
+    if limit:
+        request += "limit=%i" % limit
+    return read_json(request_server(session, request))
 
 opts = cmdline_parse()
 session = auth(opts.host, opts.port, opts.user, opts.password)
 #resp = albums(session, search = "dance")
+resp = artists(session, search = "kraft")
 humanize_resp(resp)
 

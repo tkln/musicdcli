@@ -4,7 +4,6 @@ import re
 import sys
 import os
 import urllib.request
-from http.cookiejar import CookieJar, DefaultCookiePolicy
 from optparse import OptionParser
 
 def parse_host_arg(arg):

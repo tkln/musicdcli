@@ -45,75 +45,85 @@ def cmdline_parse():
 
     return options
 
-#returns a respones object
-def request_server(session, request):
-    opener = urllib.request.build_opener()
-    try:
-        opener.addheaders.append(('Cookie', session['cookie']))
-    except KeyError:
-        pass
-    resp = opener.open("http://%s:%i%s" % (session['host'], session['port'], 
-                       request))
-    if resp.status is not 200:
-        print("server returned %i, reason: %s" % (resp.status, reason))
-    return resp
-
-#returns a cookie string from a header
-def get_cookie(resp):
-    return resp.getheaders()[3][1]
-
-#reads and parses json
-def read_json(resp):
-    return json.loads(resp.read().decode('utf-8'))
-
 #authenticates to the server. returns a cookie, if successful
-def auth(host, port, user, password):
-    resp = request_server({'host' : host, 'port' : port}, 
-                          "/auth?user=%s&password=%s" % (user, password))
-    return {'host' : host, 'port' : port, 'cookie' : get_cookie(resp)}
-
 def humanize_resp(resp):
     for set in resp:
         for row in resp[set]:
             print(row)
 
-def albums(session, albumid = None, search = None, sort = None, total = None, 
-           offset = None, limit = None):
-    request = "/albums?"
-    if albumid:
-        request += "albumid=%i&" % albumid
-    if search:
-        request += "search=%s&" % search
-    if sort:
-        request += "sort=%s&" % sort
-    if total:
-        request += "total=%s&" % total
-    if offset:
-        request += "offset=%i" % offset
-    if limit:
-        request += "limit=%i" % limit
-    return read_json(request_server(session, request))
+class Musicd:
+    def __init__(self, session = None):
+        self.__session = session
 
-def artists(session, artistid = None, search = None, sort = None, total = None,
-            offset = None, limit = None):
-    request = "/artists?"
-    if artistid:
-        request += "artistid=%i&" % artistid
-    if search:
-        request += "search=%s&" % search
-    if sort:
-        request += "sort=%s&" % sort
-    if total:
-        request += "total=%s&" % total
-    if offset:
-        request += "offset=%i" % offset
-    if limit:
-        request += "limit=%i" % limit
-    return read_json(request_server(session, request))
+    #returns a respones object
+    def __request_server(self, session, request):
+        opener = urllib.request.build_opener()
+        try:
+            opener.addheaders.append(('Cookie', session['cookie']))
+        except KeyError:
+            pass
+        resp = opener.open("http://%s:%i%s" % (session['host'], session['port'], 
+                           request))
+        if resp.status is not 200:
+            print("server returned %i, reason: %s" % (resp.status, reason))
+        return resp
+
+    #reads and parses json
+    def __read_json(self, resp):
+        return json.loads(resp.read().decode('utf-8'))
+
+    def __method_request(self, request):
+        return self.__read_json(self.__request_server(self.__session, request))
+    
+    #returns a cookie string from a header
+    def __get_cookie(self, resp):
+        return resp.getheaders()[3][1]
+
+    def auth(self, host, port, user, password):
+            resp = self.__request_server({'host' : host, 'port' : port}, 
+                                  "/auth?user=%s&password=%s" % 
+                                  (user, password))
+            self.__session = {'host' : host, 
+                            'port' : port, 
+                            'cookie' : self.__get_cookie(resp)}
+
+    def albums(self, albumid = None, search = None, sort = None, 
+               total = None, offset = None, limit = None):
+        request = "/albums?"
+        if albumid:
+            request += "albumid=%i&" % albumid
+        if search:
+            request += "search=%s&" % search
+        if sort:
+            request += "sort=%s&" % sort
+        if total:
+            request += "total=%s&" % total
+        if offset:
+            request += "offset=%i" % offset
+        if limit:
+            request += "limit=%i" % limit
+        return self.__method_request(request)
+
+    def artists(self, artistid = None, search = None, sort = None, 
+                total = None, offset = None, limit = None):
+        request = "/artists?"
+        if artistid:
+            request += "artistid=%i&" % artistid
+        if search:
+            request += "search=%s&" % search
+        if sort:
+            request += "sort=%s&" % sort
+        if total:
+            request += "total=%s&" % total
+        if offset:
+            request += "offset=%i" % offset
+        if limit:
+            request += "limit=%i" % limit
+        return self.__method_request(request)
 
 opts = cmdline_parse()
-session = auth(opts.host, opts.port, opts.user, opts.password)
-#resp = albums(session, search = "dance")
-resp = artists(session, search = "kraft")
-humanize_resp(resp)
+musicd = Musicd()
+musicd.auth(opts.host, opts.port, opts.user, opts.password)
+print (musicd.artists(search = "kraft"))
+
 

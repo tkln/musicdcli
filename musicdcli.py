@@ -45,47 +45,50 @@ def cmdline_parse():
 
     return options
 
-#authenticates to the server. returns a cookie, if successful
 def humanize_resp(resp):
+    '''Print dict in somewhat more sensible fashion.'''
     for set in resp:
         for row in resp[set]:
             print(row)
 
 class Musicd:
+    '''A class for interfacing with the Musicd http-interface.'''
     def __init__(self, session = None):
         self.__session = session
 
-    #returns a respones object
     def __request_server(self, session, request):
+        '''Returns an urllib response object.'''
         opener = urllib.request.build_opener()
         try:
             opener.addheaders.append(('Cookie', session['cookie']))
         except KeyError:
             pass
-        resp = opener.open("http://%s:%i%s" % (session['host'], session['port'], 
-                           request))
+        resp = opener.open("http://%s:%i%s" % (session['host'], 
+                           session['port'], request))
         if resp.status is not 200:
             print("server returned %i, reason: %s" % (resp.status, reason))
         return resp
 
-    #reads and parses json
     def __read_json(self, resp):
+        '''Read and parse json from urllib response.'''
         return json.loads(resp.read().decode('utf-8'))
 
     def __method_request(self, request):
+        '''Make a request to the server and parse the response.'''
         return self.__read_json(self.__request_server(self.__session, request))
     
-    #returns a cookie string from a header
     def __get_cookie(self, resp):
+        '''Return a cookie string from urllib response.'''
         return resp.getheaders()[3][1]
 
     def auth(self, host, port, user, password):
-            resp = self.__request_server({'host' : host, 'port' : port}, 
-                                  "/auth?user=%s&password=%s" % 
-                                  (user, password))
-            self.__session = {'host' : host, 
-                            'port' : port, 
-                            'cookie' : self.__get_cookie(resp)}
+        '''Authenticate to the server. Set the internal session cookie.'''
+        resp = self.__request_server({'host' : host, 'port' : port}, 
+                              "/auth?user=%s&password=%s" % 
+                              (user, password))
+        self.__session = {'host' : host, 
+                        'port' : port, 
+                        'cookie' : self.__get_cookie(resp)}
 
     def albums(self, albumid = None, search = None, sort = None, 
                total = None, offset = None, limit = None):
